@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Note } from '../interfaces/note.interface';
-import { Firestore, collection, doc, collectionData, onSnapshot, addDoc } from '@angular/fire/firestore';
+import { Firestore, collection, doc, collectionData, onSnapshot, addDoc, updateDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -25,6 +25,38 @@ export class NoteListService {
     this.unsubNotes = this.subNotesList();
   }
 
+  async updateNote(note: Note){
+    console.log('outside if abfrage von updateNote');
+
+    if (note.id) {
+      console.log('inside if abfrage von updateNote');
+
+      let docRef = this.getSingleDocRef(this.getColIdFromNote(note), note.id);
+      await updateDoc(docRef, this.getCleanJson(note)).catch(
+        (error) => { console.log(error)}
+      ).then(() => {    
+          console.log("Document updated ");
+        })
+    }
+  }
+
+  getColIdFromNote(note:Note){
+    if (note.type == 'note') {
+      return 'notes'
+    } else {
+      return 'trash'
+    }
+  }
+
+  getCleanJson(note: Note){
+    return {
+      type: note.type,
+      title: note.title,
+      content: note.content,
+      marked: note.marked
+    }
+  }
+
   async addNote(item: Note) {
     await addDoc(this.getNotesRef(), item).catch(
       (error) => { console.error(error)}
@@ -39,7 +71,7 @@ export class NoteListService {
     return onSnapshot(this.getTrashRef(), (list) => {
       this.trashNotes = [];
       list.forEach(element => {
-        this.trashNotes.push(this.setNoteObject(element.data()));
+        this.trashNotes.push(this.setNoteObject(element.data(), element.id));
       });
     });
 
@@ -55,7 +87,7 @@ export class NoteListService {
     return onSnapshot(this.getNotesRef(), (list) => {
       this.normalNotes = [];
       list.forEach(element => {
-        this.normalNotes.push(this.setNoteObject(element.data()));
+        this.normalNotes.push(this.setNoteObject(element.data(), element.id));
       });
     });
   }
@@ -77,17 +109,18 @@ export class NoteListService {
     return collection(this.firestore, 'trash');
   }
 
-  getSingleDocRef(colId: string, docId: string){
+  getSingleDocRef(colId: string, docId: string){    
     return doc(collection(this.firestore, colId), docId)
   }
 
-  setNoteObject(obj: any): Note {
+  setNoteObject(obj: any, id: string): Note {
     return {
+      id: id,
       type: obj.type || "note",
       title: obj.title || '',
       content: obj.content || '',
       marked: obj.marked || false
-  }
+    }
   }
 
 
