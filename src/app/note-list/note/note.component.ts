@@ -38,15 +38,30 @@ export class NoteComponent {
   }
 
   moveToTrash(){
-    this.note.type = 'trash';
+    if (this.note.id) {
+      this.note.type = 'trash';
+      let docId = this.note.id;
+      delete this.note.id;
+      this.noteService.addNote(this.note, "trash");
+      this.noteService.deleteNote("notes", docId)
+    }
   }
 
   moveToNotes(){
-    this.note.type = 'note';
+    if (this.note.id) {
+      this.note.type = 'note';
+      let docId = this.note.id;
+      delete this.note.id;
+      this.noteService.addNote(this.note, "notes");
+      this.noteService.deleteNote("trash", docId)
+    }
   }
 
   deleteNote(){
-
+    if (this.note.id) { //if abfrage kann auch dafuer sorgen dass man string nicht gleich auch zusaetzlich mit undefined setzen muss...
+    let docId = this.note.id;
+    this.noteService.deleteNote("trash", docId);
+    }
   }
 
   saveNote(){

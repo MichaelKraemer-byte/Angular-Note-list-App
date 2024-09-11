@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Note } from '../interfaces/note.interface';
-import { Firestore, collection, doc, collectionData, onSnapshot, addDoc, updateDoc } from '@angular/fire/firestore';
+import { Firestore, collection, doc, collectionData, onSnapshot, addDoc, updateDoc, deleteDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -23,6 +23,11 @@ export class NoteListService {
   constructor() { 
     this.unsubTrash = this.subTrashList();
     this.unsubNotes = this.subNotesList();
+  }
+
+  async deleteNote(colId: string, docId: string){
+    await deleteDoc(this.getSingleDocRef(colId, docId)).catch(
+    (error) => {console.log(error)} )      
   }
 
   async updateNote(note: Note){
@@ -57,14 +62,24 @@ export class NoteListService {
     }
   }
 
-  async addNote(item: Note) {
-    await addDoc(this.getNotesRef(), item).catch(
-      (error) => { console.error(error)}
-    ).then(
-      (docRef) => {    
-        console.log("Document written with ID: ", docRef?.id);
-      }
-    )
+  async addNote(note: Note, colId: "notes" | "trash") {
+    if (colId == 'notes') {
+      await addDoc(this.getNotesRef(), note).catch(
+        (error) => { console.error(error)}
+      ).then(
+        (docRef) => {    
+          console.log("Document written with ID: ", docRef?.id);
+        }
+      )
+    } else if (colId == 'trash') {
+      await addDoc(this.getTrashRef(), note).catch(
+        (error) => { console.error(error)}
+      ).then(
+        (docRef) => {    
+          console.log("Document written with ID: ", docRef?.id);
+        }
+      )
+    }
   } // addDoc(Reference(in diesem fall 'notes' oder 'trash'), item (das hinzugefuegt werden soll)) - dann .catch & .then block als ueberpruefung (try-cach-block) geht auch)
 
   subTrashList(){
