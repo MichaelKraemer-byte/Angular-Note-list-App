@@ -19,7 +19,12 @@ export class NoteComponent {
   constructor(private noteService: NoteListService){}
 
   changeMarkedStatus(){
-    this.note.marked = !this.note.marked;
+    if (this.note.marked) {
+      this.note.marked = false;
+    } else {
+      this.note.marked = true;
+    }
+    this.noteService.updateNote(this.note);
   }
 
   deleteHovered(){

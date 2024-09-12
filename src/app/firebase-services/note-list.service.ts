@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { Note } from '../interfaces/note.interface';
-import { Firestore, collection, doc, collectionData, onSnapshot, addDoc, updateDoc, deleteDoc } from '@angular/fire/firestore';
+import { query, orderBy, limit, where, Firestore, collection, doc, collectionData, onSnapshot, addDoc, updateDoc, deleteDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
 @Injectable({
@@ -10,6 +10,7 @@ export class NoteListService {
 
   trashNotes: Note[] = [];
   normalNotes: Note[] = [];
+  normalMarkedNotes: Note[] = [];
 
   // items$;
   // items;
@@ -18,11 +19,13 @@ export class NoteListService {
 
   unsubNotes;
   unsubTrash;
+  unsubNormalMarkedNotes;
   // unsubSingle;
 
   constructor() { 
     this.unsubTrash = this.subTrashList();
     this.unsubNotes = this.subNotesList();
+    this.unsubNormalMarkedNotes = this.subNormalMarkedNotesList();
   }
 
   async deleteNote(colId: string, docId: string){
@@ -90,7 +93,7 @@ export class NoteListService {
       });
     });
 
-    // bei onSnapshot kriege ich die ganzen dateien mit .data() 
+    // bei onSnapshot mit "element".data()  kriege ich die ganzen documents einer collection
     // andernfalls nur mit 'element' kriege ich alle dateien der collection token (id, existss, ...)
 
     // unsubList wird definiert, um spaeter den subscription process wieder zu beenden. hier im constructor wird er mit onSnapshot direkt geschrieben,
@@ -99,7 +102,12 @@ export class NoteListService {
   }
 
   subNotesList(){
-    return onSnapshot(this.getNotesRef(), (list) => {
+    const q = query(this.getNotesRef(), limit(100)); 
+    // limit limitiert die Anzahl der angezeigten element;
+    // where() filtert nach eine if-abfrage
+    // orderBy ordnet nach Alphabet :) 
+    // orderBy() funktioniert aber nicht mit where() zusammen. 
+    return onSnapshot(q, (list) => {
       this.normalNotes = [];
       list.forEach(element => {
         this.normalNotes.push(this.setNoteObject(element.data(), element.id));
@@ -107,13 +115,24 @@ export class NoteListService {
     });
   }
 
+  subNormalMarkedNotesList(){
+    const q = query(this.getNotesRef(), where("marked", "==", true), limit(10)); 
+    // limit limitiert die Anzahl der angezeigten element;
+    // where() filtert nach eine if-abfrage
+    // orderBy ordnet nach Alphabet :) 
+    // orderBy() funktioniert aber nicht mit where() zusammen. 
+    return onSnapshot(q, (list) => {
+      this.normalMarkedNotes = [];
+      list.forEach(element => {
+        this.normalMarkedNotes.push(this.setNoteObject(element.data(), element.id));
+      });
+    });
+  }
+
   ngOnDestroy() {
-    if (this.unsubTrash) {
       this.unsubTrash();  // Beendet die Echtzeit-Verbindung zu Firestore
-    }
-    if (this.unsubNotes) {
       this.unsubNotes()
-    }
+      this.unsubNormalMarkedNotes();
   }
 
   getNotesRef(){

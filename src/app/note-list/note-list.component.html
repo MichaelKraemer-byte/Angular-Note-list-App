@@ -135,9 +135,9 @@
     <div>
 
         @if (status == 'notes') {
-            <app-note *ngFor="let note of getNormalNoteList()" [note]="note"></app-note>
+            <app-note *ngFor="let note of getList()" [note]="note"></app-note>
         } @else {
-            <app-note *ngFor="let note of getTrashNoteList()" [note]="note"></app-note>
+            <app-note *ngFor="let note of getList()" [note]="note"></app-note>
         }
 
 
