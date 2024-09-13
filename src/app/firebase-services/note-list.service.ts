@@ -1,12 +1,13 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, OnDestroy  } from '@angular/core';
 import { Note } from '../interfaces/note.interface';
 import { query, orderBy, limit, where, Firestore, collection, doc, collectionData, onSnapshot, addDoc, updateDoc, deleteDoc } from '@angular/fire/firestore';
 import { Observable } from 'rxjs';
 
+
 @Injectable({
   providedIn: 'root'
 })
-export class NoteListService {
+export class NoteListService implements OnDestroy {
 
   trashNotes: Note[] = [];
   normalNotes: Note[] = [];
@@ -29,7 +30,9 @@ export class NoteListService {
   }
 
   async deleteNote(colId: string, docId: string){
-    await deleteDoc(this.getSingleDocRef(colId, docId)).catch(
+    await deleteDoc(this.getSingleDocRef(colId, docId)).catch( 
+    //mit delete loescht man ganze collections. 
+    // um einzelne documents aus einer colelction zu loeschen, brauche ich "updateDoc"
     (error) => {console.log(error)} )      
   }
 
@@ -130,9 +133,17 @@ export class NoteListService {
   }
 
   ngOnDestroy() {
-      this.unsubTrash();  // Beendet die Echtzeit-Verbindung zu Firestore
-      this.unsubNotes()
+    // Die Subscriptions beenden
+    if (this.unsubTrash) {
+      this.unsubTrash();
+    }
+    if (this.unsubNotes) {
+      this.unsubNotes();
+    }
+    if (this.unsubNormalMarkedNotes) {
       this.unsubNormalMarkedNotes();
+    }
+    console.log("All Firestore subscriptions have been unsubscribed.");
   }
 
   getNotesRef(){
